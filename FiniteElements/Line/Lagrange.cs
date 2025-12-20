@@ -1,0 +1,38 @@
+/*
+MathShards
+Copyright (C) 2025 Afonin Anton
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+using Real = double;
+
+using static MathShards.Quadrature.Gauss;
+
+namespace MathShards.FiniteElements.Line.Lagrange;
+
+public static class Linear
+{
+    public static readonly Func<Real, Real>[] Basis =
+    {
+        coord => 1 - coord,
+        coord => coord
+    };
+    
+    public static readonly Func<Real, Real>[] BasisGrad =
+    {
+        coord => -1,
+        coord => 1
+    };
+}
