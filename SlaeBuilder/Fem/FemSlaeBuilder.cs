@@ -93,4 +93,20 @@ static class Shared {
         while (@where[start] != what) start++;
         return start;
     }
+
+    public static int? TryLFind<T> (T[] where, T what, int start, int end)
+    where T: unmanaged, INumber<T>
+    {
+        while (start < end && @where[start] != what) start++;
+
+        if (start < end)
+        {
+            return start;
+        }
+        else
+        {
+            return null;
+        }
+
+    }
 }

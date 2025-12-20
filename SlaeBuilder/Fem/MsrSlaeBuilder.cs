@@ -174,6 +174,20 @@ public class MsrSlaeBuilder : IFemSlaeBuilder
                 _b[m] = _funcs.Ug(num, _mesh.X[x1], _mesh.Y[yi]);
                 _matrix.Di[m] = 1;
 
+                /* Гауссово исключение столбца */
+                for (int a = 0; a < _matrix.Size; a++)
+                {
+                    var a0 = _matrix.Ia[a];
+                    var a1 = _matrix.Ia[a+1];
+                    var idx = TryLFind(_matrix.Ja, m, a0, a1);
+
+                    if (idx.HasValue)
+                    {
+                        _b[a] -= _b[m] * _matrix.Elems[idx.Value];
+                        _matrix.Elems[idx.Value] = 0;
+                    }
+                }
+
                 /* Обнуление строки */
                 int ig0 = _matrix.Ia[m];
                 int ig1 = _matrix.Ia[m + 1];
@@ -190,6 +204,20 @@ public class MsrSlaeBuilder : IFemSlaeBuilder
                 var m = y1 * _mesh.X.Length + xi;
                 _b[m] = _funcs.Ug(num, _mesh.X[xi], _mesh.Y[y1]);
                 _matrix.Di[m] = 1;
+
+                /* Гауссово исключение столбца */
+                for (int a = 0; a < _matrix.Size; a++)
+                {
+                    var a0 = _matrix.Ia[a];
+                    var a1 = _matrix.Ia[a+1];
+                    var idx = TryLFind(_matrix.Ja, m, a0, a1);
+
+                    if (idx.HasValue)
+                    {
+                        _b[a] -= _b[m] * _matrix.Elems[idx.Value];
+                        _matrix.Elems[idx.Value] = 0;
+                    }
+                }
 
                 /* Обнуление строки */
                 int ig0 = _matrix.Ia[m];
@@ -595,6 +623,7 @@ public class MsrSlaeBuilder : IFemSlaeBuilder
     {
         // csharp не нравится stackalloc в циклах
         Span<Real> localB = stackalloc Real[4];
+        var localM = new Real[4, 4];
         Span<int> m = stackalloc int[4];
         var kernTime = Stopwatch.StartNew();
 
@@ -603,107 +632,66 @@ public class MsrSlaeBuilder : IFemSlaeBuilder
             for (int xi = 0; xi < _mesh.X.Length - 1; xi++)
             {
                 var subDom = _mesh.GetSubdomNumAtElCoords(xi, yi);
-
                 if (!subDom.HasValue) continue;
 
-                Real x0 = _mesh.X[xi];
-                Real x1 = _mesh.X[xi + 1];
-                Real y0 = _mesh.Y[yi];
-                Real y1 = _mesh.Y[yi + 1];
+                PairF64 p0 = new(_mesh.X[xi],     _mesh.Y[yi]);
+                PairF64 p1 = new(_mesh.X[xi + 1], _mesh.Y[yi + 1]);
 
-                Real GetGammaAverage()
-                {
-                    Real res = _funcs.Gamma(subDom.Value, x0, y0)
-                            + _funcs.Gamma(subDom.Value, x1, y0)
-                            + _funcs.Gamma(subDom.Value, x0, y1)
-                            + _funcs.Gamma(subDom.Value, x1, y1);
-
-                    return res / 4;
-                }
-
-                Real GetLamdaAverage()
-                {
-                    Real res = _funcs.Lambda(subDom.Value, x0, y0)
-                            + _funcs.Lambda(subDom.Value, x1, y0)
-                            + _funcs.Lambda(subDom.Value, x0, y1)
-                            + _funcs.Lambda(subDom.Value, x1, y1);
-
-                    return res / 4;
-                }
-
-                Real hy = y1 - y0;
-                Real hx = x1 - x0;
-                // Заменить на интеграл от биквадратичного разложения
-                Real l_avg = GetLamdaAverage();
-                Real g_avg = GetGammaAverage();
-
-                Real f1 = _funcs.F(subDom.Value, x0, y0);
-                Real f2 = _funcs.F(subDom.Value, x1, y0);
-                Real f3 = _funcs.F(subDom.Value, x0, y1);
-                Real f4 = _funcs.F(subDom.Value, x1, y1);
-
-                localB[0] = hx * hy / 36 * (4 * f1 + 2 * f2 + 2 * f3 + f4);
-                localB[1] = hx * hy / 36 * (2 * f1 + 4 * f2 + f3 + 2 * f4);
-                localB[2] = hx * hy / 36 * (2 * f1 + f2 + 4 * f3 + 2 * f4);
-                localB[3] = hx * hy / 36 * (f1 + 2 * f2 + 2 * f3 + 4 * f4);
+                localM = Basis.ComputeLocalTempl(_funcs, p0, p1, subDom.Value);
 
                 m[0] = yi * _mesh.X.Length + xi;
                 m[1] = m[0] + 1;
                 m[2] = (yi + 1) * _mesh.X.Length + xi;
                 m[3] = m[2] + 1;
 
-                Real Mat(int i, int j)
-                {
-                    return l_avg / 6 * (hy / hx * Basis.LocalG1[i, j] + hx / hy * Basis.LocalG2[i, j])
-                         + g_avg / 36 * hx * hy * Basis.LocalM[i, j];
-                }
-
                 /* нахождение в ja индексов элементов в al/au, куда
                     нужно добавить элементы локальных матриц */
                 int a = _matrix.Ia[m[0]];
-                _matrix.Di[m[0]] += Mat(0, 0);
+                _matrix.Di[m[0]] += localM[0, 0];
                 a = LFind(_matrix.Ja, m[1], a);
-                _matrix.Elems[a] += Mat(0, 1);
+                _matrix.Elems[a] += localM[0, 1];
                 a = LFind(_matrix.Ja, m[2], a);
-                _matrix.Elems[a] += Mat(0, 2);
+                _matrix.Elems[a] += localM[0, 2];
                 a = LFind(_matrix.Ja, m[3], a);
-                _matrix.Elems[a] += Mat(0, 3);
+                _matrix.Elems[a] += localM[0, 3];
 
                 a = _matrix.Ia[m[1]];
                 a = LFind(_matrix.Ja, m[0], a);
-                _matrix.Elems[a] += Mat(1, 0);
-                _matrix.Di[m[1]] += Mat(1, 1);
+                _matrix.Elems[a] += localM[1, 0];
+                _matrix.Di[m[1]] += localM[1, 1];
                 a = LFind(_matrix.Ja, m[2], a);
-                _matrix.Elems[a] += Mat(1, 2);
+                _matrix.Elems[a] += localM[1, 2];
                 a = LFind(_matrix.Ja, m[3], a);
-                _matrix.Elems[a] += Mat(1, 3);
+                _matrix.Elems[a] += localM[1, 3];
 
                 a = _matrix.Ia[m[2]];
                 a = LFind(_matrix.Ja, m[0], a);
-                _matrix.Elems[a] += Mat(2, 0);
+                _matrix.Elems[a] += localM[2, 0];
                 a = LFind(_matrix.Ja, m[1], a);
-                _matrix.Elems[a] += Mat(2, 1);
-                _matrix.Di[m[2]] += Mat(2, 2);
+                _matrix.Elems[a] += localM[2, 1];
+                _matrix.Di[m[2]] += localM[2, 2];
                 a = LFind(_matrix.Ja, m[3], a);
-                _matrix.Elems[a] += Mat(2, 3);
-
+                _matrix.Elems[a] += localM[2, 3];
 
                 a = _matrix.Ia[m[3]];
                 a = LFind(_matrix.Ja, m[0], a);
-                _matrix.Elems[a] += Mat(3, 0);
+                _matrix.Elems[a] += localM[3, 0];
                 a = LFind(_matrix.Ja, m[1], a);
-                _matrix.Elems[a] += Mat(3, 1);
+                _matrix.Elems[a] += localM[3, 1];
                 a = LFind(_matrix.Ja, m[2], a);
-                _matrix.Elems[a] += Mat(3, 2);
-                _matrix.Di[m[3]] += Mat(3, 3);
+                _matrix.Elems[a] += localM[3, 2];
+                _matrix.Di[m[3]] += localM[3, 3];
 
-                /* добавление локальной правой части в слау */
+
+                localB = Basis.ComputeLocalBTempl(_funcs, p0, p1, subDom.Value);
+
                 for (int i = 0; i < 4; i++)
                 {
                     _b[m[i]] += localB[i];
                 }
             }
         }
+
         /* После сборки матрицы надо нулевые диагональные элементы заменить
             на 1 */
         for (int i = 0; i < _matrix.Di.Length; i++)

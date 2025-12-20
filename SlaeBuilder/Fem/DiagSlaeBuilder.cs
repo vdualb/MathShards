@@ -161,7 +161,7 @@ where Tc : CoordSystem.Dim2.ICoordSystem
             t = m+3+_matrix.Gap;
             if (t < _matrix.Size) _b[t] -= b * _matrix.Ld3[m];
 
-            /* Обнуление строки и столбца */
+            // Обнуление снизу и справа
             _matrix.Rd3[m] = 0;
             _matrix.Rd2[m] = 0;
             _matrix.Rd1[m] = 0;
@@ -171,6 +171,7 @@ where Tc : CoordSystem.Dim2.ICoordSystem
             _matrix.Ld1[m] = 0;
             _matrix.Ld0[m] = 0;
 
+            /* Обнуление слева и сверху */
             t = m - 3 - _matrix.Gap;
             if (t >= 0)
             {
@@ -621,7 +622,7 @@ where Tc : CoordSystem.Dim2.ICoordSystem
                 var subDom = _mesh.GetSubdomNumAtElCoords(xi, yi);
                 if (subDom == null) continue;
                 
-                PairF64 p0 = new(_mesh.X[xi], _mesh.Y[yi]);
+                PairF64 p0 = new(_mesh.X[xi],     _mesh.Y[yi]);
                 PairF64 p1 = new(_mesh.X[xi + 1], _mesh.Y[yi + 1]);
                 
                 var local = Dim2.ComputeLocal<Tc>(_funcs, p0, p1, subDom.Value);

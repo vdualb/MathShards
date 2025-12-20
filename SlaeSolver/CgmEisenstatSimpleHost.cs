@@ -79,7 +79,7 @@ public class CgmEisenstatSimpleHost : ISlaeSolver
         {
             return SolveImpl(m, b, x);
         } else {
-            throw new ArgumentException();
+            throw new ArgumentException("Matrix doesn't implement required IHalves interface");
         }
     }
     
