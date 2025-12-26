@@ -1,9 +1,3 @@
-#if USE_DOUBLE
-using Real = double;
-#else
-using Real = float;
-#endif
-
 namespace MathShards.TelmaCore;
 
 public enum AngleMeasureUnits { amuRadians = 0, amuDegrees = 1 };
