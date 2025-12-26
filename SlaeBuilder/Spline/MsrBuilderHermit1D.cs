@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Diagnostics;
 
@@ -55,7 +59,7 @@ public class MsrSlaeBuilderHermit1D : ISplineSlaeBuilder1D
     }
     
     public static ISplineSlaeBuilder1D Construct(
-        LineMesh inMesh, double[] inValues,
+        LineMesh inMesh, Real[] inValues,
         LineMesh mesh, SplineParams splineParams
     ) {
         return new MsrSlaeBuilderHermit1D(
@@ -64,7 +68,7 @@ public class MsrSlaeBuilderHermit1D : ISplineSlaeBuilder1D
         );
     }
 
-    public (IMatrix matrix, double[] right) Build()
+    public (IMatrix matrix, Real[] right) Build()
     {
         Trace.Indent();
         var sw = Stopwatch.StartNew();

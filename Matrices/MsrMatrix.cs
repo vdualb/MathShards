@@ -17,7 +17,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #define HOST_PARALLEL
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Collections.Concurrent;
 
@@ -115,7 +119,7 @@ public class MsrMatrix : IHalves
 #endif
     }
 
-    public unsafe void LMul(ReadOnlySpan<double> vec, Span<double> res)
+    public unsafe void LMul(ReadOnlySpan<Real> vec, Span<Real> res)
     {
 #if HOST_PARALLEL
         var partitioner = Partitioner.Create(0, Ia.Length - 1);
@@ -156,7 +160,7 @@ public class MsrMatrix : IHalves
 #endif
     }
 
-    public unsafe void UMul(ReadOnlySpan<double> vec, Span<double> res)
+    public unsafe void UMul(ReadOnlySpan<Real> vec, Span<Real> res)
     {
 #if HOST_PARALLEL
         var partitioner = Partitioner.Create(0, Ia.Length - 1);
@@ -203,7 +207,7 @@ public class MsrMatrix : IHalves
 #endif
     }
 
-    public void InvLMul(Span<double> inOut)
+    public void InvLMul(Span<Real> inOut)
     {
         for (int i = 0; i < Ia.Length - 1; i++)
         {
@@ -219,7 +223,7 @@ public class MsrMatrix : IHalves
         }
     }
 
-    public void InvUMul(Span<double> inOut)
+    public void InvUMul(Span<Real> inOut)
     {
         for (int i = Size - 1; i >= 0; i--)
         {

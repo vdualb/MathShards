@@ -19,7 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define HOST_PARALLEL
 #define USE_BLAS
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Collections.Concurrent;
 

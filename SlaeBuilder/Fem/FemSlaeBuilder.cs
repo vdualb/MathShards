@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Numerics;
 
@@ -30,7 +34,7 @@ public interface IFemSlaeBuilder
 {
     FemRectMesh Mesh { get; }
     GlobalMatrixImplType GlobalMatrixImpl { get; set; }
-    static abstract IFemSlaeBuilder Construct(FemRectMesh mesh, TaskFuncs funcs);
+    static abstract IFemSlaeBuilder Construct(FemRectMesh mesh, ITaskFuncs funcs);
     (IMatrix, Real[]) Build();
 }
 

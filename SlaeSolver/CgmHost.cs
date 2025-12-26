@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 namespace MathShards.SlaeSolver;
 
@@ -40,7 +44,7 @@ public class CgmHost : ISlaeSolver
     {
         _maxIter = maxIter;
         // TODO: уменьшение eps чтобы точность ответа былв сравнима с BicgStab
-        _eps = eps / 1e+7;
+        _eps = (Real)(eps / 1e+7);
     }
 
     public static ISlaeSolver Construct(int maxIter, Real eps)

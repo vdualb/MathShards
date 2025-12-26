@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Diagnostics;
 
@@ -39,16 +43,16 @@ where Tc : CoordSystem.Dim2.ICoordSystem
     public FemRectMesh Mesh { get => _mesh; }
     public GlobalMatrixImplType GlobalMatrixImpl { get; set; } = GlobalMatrixImplType.Host;
 
-    readonly TaskFuncs _funcs;
+    readonly ITaskFuncs _funcs;
 
-    public DiagSlaeBuilderHermit(FemRectMesh mesh, TaskFuncs funcs)
+    public DiagSlaeBuilderHermit(FemRectMesh mesh, ITaskFuncs funcs)
     {
         _mesh = mesh;
         _matrix = new MsrMatrix();
         _funcs = funcs;
     }
 
-    public static IFemSlaeBuilder Construct(FemRectMesh mesh, TaskFuncs funcs)
+    public static IFemSlaeBuilder Construct(FemRectMesh mesh, ITaskFuncs funcs)
         => new DiagSlaeBuilderHermit<Tc>(mesh, funcs);
 
     public (IMatrix, Real[]) Build()
@@ -177,8 +181,8 @@ where Tc : CoordSystem.Dim2.ICoordSystem
                 var subDom = _mesh.GetSubdomNumAtElCoords(xi, yi);
                 if (subDom == null) continue;
 
-                PairF64 p0 = new(_mesh.X[xi], _mesh.Y[yi]);
-                PairF64 p1 = new(_mesh.X[xi + 1], _mesh.Y[yi + 1]);
+                PairReal p0 = new(_mesh.X[xi], _mesh.Y[yi]);
+                PairReal p1 = new(_mesh.X[xi + 1], _mesh.Y[yi + 1]);
 
                 var local = Dim2.ComputeLocal<Tc>(_funcs, p0, p1, subDom.Value);
                 var localB = Dim2.ComputeLocalB<Tc>(_funcs, p0, p1, subDom.Value);

@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Diagnostics;
 
@@ -56,13 +60,13 @@ where Tc : CoordSystem.Dim2.ICoordSystem
     }
 
     public static ISplineSlaeBuilder Construct(
-        RectMesh inMesh, double[] inValues,
+        RectMesh inMesh, Real[] inValues,
         RectMesh mesh
     ) {
         return new MsrSlaeBuilderHermit<Tc>(inMesh, inValues, mesh);
     }
 
-    public (IMatrix matrix, double[] right) Build()
+    public (IMatrix matrix, Real[] right) Build()
     {
         Trace.Indent();
         var sw = Stopwatch.StartNew();
@@ -159,10 +163,10 @@ where Tc : CoordSystem.Dim2.ICoordSystem
         }
     }
 
-    Real[,] ComputeLocal(PairF64 p0, PairF64 p1, PairF64 srcp)
+    Real[,] ComputeLocal(PairReal p0, PairReal p1, PairReal srcp)
     {
         // TODO: способ задания w извне
-        var w = 0.9;
+        var w = (Real)0.9;
         var результат = new Real[16, 16];
         
         for (int i = 0; i < 16; i++)
@@ -178,10 +182,10 @@ where Tc : CoordSystem.Dim2.ICoordSystem
         return результат;
     }
     
-    Real[] ComputeLocalB(PairF64 p0, PairF64 p1, PairF64 srcp, int dof)
+    Real[] ComputeLocalB(PairReal p0, PairReal p1, PairReal srcp, int dof)
     {
         // TODO: способ задания w извне
-        var w = 0.9;
+        var w = (Real)0.9;
         var результат = new Real[16];
         
         for (int i = 0; i < 16; i++)
@@ -204,8 +208,8 @@ where Tc : CoordSystem.Dim2.ICoordSystem
             int srcyi = srcyi0;
             for (int xi = 0; xi < _splineMesh.X.Length - 1; xi++)
             {
-                PairF64 p0 = new(_splineMesh.X[xi], _splineMesh.Y[yi]);
-                PairF64 p1 = new(_splineMesh.X[xi + 1], _splineMesh.Y[yi + 1]);
+                PairReal p0 = new(_splineMesh.X[xi], _splineMesh.Y[yi]);
+                PairReal p1 = new(_splineMesh.X[xi + 1], _splineMesh.Y[yi + 1]);
 
                 var dofs = new int[16];
                 {
@@ -234,7 +238,7 @@ where Tc : CoordSystem.Dim2.ICoordSystem
                             srcxi < _inMesh.X.Length && _inMesh.X[srcxi] <= p1.X;
                             srcxi++
                         ) {
-                            PairF64 srcp = new(_inMesh.X[srcxi], _inMesh.Y[srcyi]);
+                            PairReal srcp = new(_inMesh.X[srcxi], _inMesh.Y[srcyi]);
                             var local = ComputeLocal(p0, p1, srcp);
                             int dof = srcyi * _inMesh.X.Length + srcxi;
                             var localB = ComputeLocalB(p0, p1, srcp, dof);

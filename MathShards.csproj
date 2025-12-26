@@ -12,4 +12,10 @@
     <ProjectReference Include="../SparkAlgos/SparkAlgos.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- Use double precision floating point numbers -->
+    <DefineConstants>TRACE;USE_DOUBLE</DefineConstants>
+    <!-- ;USE_DOUBLE -->
+  </PropertyGroup>
+
 </Project>

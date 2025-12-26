@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 namespace MathShards.FiniteElements.Rectangle.Lagrange;
 
@@ -27,7 +31,7 @@ using MathShards.CoordSystem.Dim2;
 
 public static class BiLinear
 {
-    public static readonly Func<PairF64, Real>[] Basis =
+    public static readonly Func<PairReal, Real>[] Basis =
     {
         vert => (1 - vert.X) * (1 - vert.Y),
         vert => vert.X       * (1 - vert.Y),
@@ -35,7 +39,7 @@ public static class BiLinear
         vert => vert.X       * vert.Y
     };
 
-    public static readonly Func<PairF64, Real>[,] BasisGrad =
+    public static readonly Func<PairReal, Real>[,] BasisGrad =
     {
         {
             vert => -(1 - vert.Y),
@@ -55,7 +59,7 @@ public static class BiLinear
         }
     };
     
-    public static Real[,] ComputeLocal<Tc>(TaskFuncs funcs, PairF64 p0, PairF64 p1, int subDom)
+    public static Real[,] ComputeLocal<Tc>(ITaskFuncs funcs, PairReal p0, PairReal p1, int subDom)
     where Tc : ICoordSystem
     {
         var values = new Real[4, 4];
@@ -66,10 +70,10 @@ public static class BiLinear
             {
                 var ph = p1 - p0;
 
-                double funcMass(PairF64 point)
+                Real funcMass(PairReal point)
                 {
                     // в координатах шаблонного базиса, [0;1]
-                    var p01 = new PairF64(
+                    var p01 = new PairReal(
                         (point.X - p0.X) / ph.X,
                         (point.Y - p0.Y) / ph.Y
                     );
@@ -81,10 +85,10 @@ public static class BiLinear
 
                 values[i, j] = Integrate2DOrder5(p0, p1, funcMass);
 
-                double funcStiffness(PairF64 point)
+                Real funcStiffness(PairReal point)
                 {
                     // в координатах шаблонного базиса - [0;1]
-                    var p01 = new PairF64(
+                    var p01 = new PairReal(
                         (point.X - p0.X) / ph.X,
                         (point.Y - p0.Y) / ph.Y
                     );
@@ -107,7 +111,7 @@ public static class BiLinear
         return values;
     }
     
-    public static Real[] ComputeLocalB<Tc>(TaskFuncs funcs, PairF64 p0, PairF64 p1, int subDom)
+    public static Real[] ComputeLocalB<Tc>(ITaskFuncs funcs, PairReal p0, PairReal p1, int subDom)
     where Tc : ICoordSystem
     {
         var ph = p1 - p0;
@@ -115,10 +119,10 @@ public static class BiLinear
         
         for (int i = 0; i < 4; i++)
         {
-            var func = (PairF64 point) =>
+            var func = (PairReal point) =>
             {
                 // в координатах шаблонного базиса - [0;1]
-                var p01 = new PairF64(
+                var p01 = new PairReal(
                     (point.X - p0.X) / ph.X,
                     (point.Y - p0.Y) / ph.Y
                 );
@@ -152,7 +156,7 @@ public static class BiLinear
         {1, 2, 2, 4},
     };
     
-    public static Real[] ComputeLocalBTempl(TaskFuncs funcs, PairF64 p0, PairF64 p1, int subDom)
+    public static Real[] ComputeLocalBTempl(ITaskFuncs funcs, PairReal p0, PairReal p1, int subDom)
     {
         var ph = p1 - p0;
         var res = new Real[4];
@@ -174,7 +178,7 @@ public static class BiLinear
         return res;
     }
 
-    public static Real [,] ComputeLocalTempl(TaskFuncs funcs, PairF64 p0, PairF64 p1, int subDom)
+    public static Real [,] ComputeLocalTempl(ITaskFuncs funcs, PairReal p0, PairReal p1, int subDom)
     {
         Real GetGammaAverage()
         {

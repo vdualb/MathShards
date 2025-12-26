@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 using System.Diagnostics;
 
@@ -35,7 +39,7 @@ using static MathShards.Quadrature.Gauss;
 class PatchVectorHAligned : IPatchVector
 {
     public required int[] Dofs { get; init; }
-    public double[] Values { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
+    public Real[] Values { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
 }
 
 // class PatchVectorVAligned
@@ -62,16 +66,16 @@ where Tc : CoordSystem.Dim2.ICoordSystem
     public FemRectMesh Mesh { get => _mesh; }
     public GlobalMatrixImplType GlobalMatrixImpl { get; set; } = GlobalMatrixImplType.Host;
 
-    readonly TaskFuncs _funcs;
+    readonly ITaskFuncs _funcs;
 
-    public DiagSlaeBuilder(FemRectMesh mesh, TaskFuncs funcs)
+    public DiagSlaeBuilder(FemRectMesh mesh, ITaskFuncs funcs)
     {
         _mesh = mesh;
         _matrix = new Diag9Matrix();
         _funcs = funcs;
     }
 
-    public static IFemSlaeBuilder Construct(FemRectMesh mesh, TaskFuncs funcs)
+    public static IFemSlaeBuilder Construct(FemRectMesh mesh, ITaskFuncs funcs)
         => new DiagSlaeBuilder<Tc>(mesh, funcs);
 
     public (IMatrix, Real[]) Build()
@@ -519,7 +523,7 @@ where Tc : CoordSystem.Dim2.ICoordSystem
                             x =>
                             {
                                 // в координатах шаблонного базиса - [0;1]
-                                var x01 = (x - x0) / hx;
+                                Real x01 = (float)((x - x0) / hx);
                                 return _funcs.Beta(num)
                                     * Dim1.Basis[i](x01)
                                     * Dim1.Basis[j](x01)
@@ -622,8 +626,8 @@ where Tc : CoordSystem.Dim2.ICoordSystem
                 var subDom = _mesh.GetSubdomNumAtElCoords(xi, yi);
                 if (subDom == null) continue;
                 
-                PairF64 p0 = new(_mesh.X[xi],     _mesh.Y[yi]);
-                PairF64 p1 = new(_mesh.X[xi + 1], _mesh.Y[yi + 1]);
+                PairReal p0 = new(_mesh.X[xi],     _mesh.Y[yi]);
+                PairReal p1 = new(_mesh.X[xi + 1], _mesh.Y[yi + 1]);
                 
                 var local = Dim2.ComputeLocal<Tc>(_funcs, p0, p1, subDom.Value);
 

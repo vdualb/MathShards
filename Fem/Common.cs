@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#if USE_DOUBLE
 using Real = double;
+#else
+using Real = float;
+#endif
 
 namespace MathShards.Fem.Common;
 
@@ -43,7 +47,7 @@ public struct BoundaryCondition
     public int Y2 { get; set; }
 }
 
-public interface TaskFuncs
+public interface ITaskFuncs
 {
     string Description { get; }
 
