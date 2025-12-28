@@ -20,6 +20,7 @@ namespace MathShards.SlaeSolver;
 
 using static MathShards.SlaeSolver.Shared;
 using Matrices.Types;
+using System.Diagnostics;
 
 // МСГ
 public class CgmEisenstatHost : ISlaeSolver
@@ -86,6 +87,9 @@ public class CgmEisenstatHost : ISlaeSolver
         var z = this.z.AsSpan();
         var t = this.t.AsSpan();
 
+        var sw_invL = new Stopwatch();
+        var sw_invU = new Stopwatch();
+
         // 6a
         matrix.Mul(x, r_stroke);
         b.CopyTo(r_hat);
@@ -106,18 +110,22 @@ public class CgmEisenstatHost : ISlaeSolver
             // 6c
             // t:
             p.CopyTo(t);
+            sw_invU.Start();
             matrix.InvUMul(t);
+            sw_invU.Stop();
             // Ap:
             t.CopyTo(Ap);
             Vmul(Ap, matrix.Di);
             Scale(-1, Ap);
             Axpy(1, p, Ap);
+            sw_invL.Start();
             matrix.InvLMul(Ap);
+            sw_invL.Stop();
             Axpy(1, t, Ap);
             // alpha:
             var pAp = Dot(p, Ap);
             var alpha = rr0 / pAp;
-            
+
             // 6d
             Axpy(alpha, t, x);
 
@@ -145,6 +153,9 @@ public class CgmEisenstatHost : ISlaeSolver
                 break;
             }
         }
+
+        Trace.WriteLine($"InvL time {sw_invL.ElapsedMilliseconds} ms");
+        Trace.WriteLine($"InvU time {sw_invU.ElapsedMilliseconds} ms");
 
         matrix.Mul(x, z);
         b.CopyTo(r_hat);
