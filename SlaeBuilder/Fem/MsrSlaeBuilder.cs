@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
+using SparkCompute;
 using SparkCL;
-using OCLHelper;
 
 
 namespace MathShards.SlaeBuilder.Fem;
